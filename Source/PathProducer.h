@@ -103,7 +103,7 @@ public:
     return true;
   }
 private:
-  static constexpr int FFT_ORDER {12}; // 2026 04 14 現在、外部のクラスが 12 Order 以外を受け付けてないから変更しないで
+  static constexpr int FFT_ORDER {12};
   static constexpr int FFT_SIZE {1 << FFT_ORDER};
   static constexpr int FFT_SIZE_HALF {FFT_SIZE / 2};
   static constexpr float FFT_SIZE_HALF_INVERSE {1.0f / static_cast<float>(FFT_SIZE_HALF)};

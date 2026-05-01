@@ -1,0 +1,19 @@
+BasedOnStyle: LLVM
+
+IndentWidth: 2
+TabWidth: 2
+
+UseTab: Never
+AllowShortFunctionsOnASingleLine: None
+IndentCaseLabels: true
+TrimTrailingWhitespace: true
+
+ColumnLimit: 0
+
+# namespace
+NamespaceIndentation: All
+FixNamespaceComments: false
+
+MaxEmptyLinesToKeep: 0
+
+KeepEmptyLinesAtTheStartOfBlocks: false

@@ -1,7 +1,9 @@
 /Builds/
+/build/
 /JuceLibraryCode/
 /Releases/
 /Dist/
+/JUCE/
 *.jucer-backup
 *.bak
 
