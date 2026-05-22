@@ -1,19 +1,18 @@
 BasedOnStyle: LLVM
 
-IndentWidth: 2
-TabWidth: 2
+#MaxEmptyLinesToKeep: 1
+#KeepEmptyLinesAtTheStartOfBlocks: false
+#BinPackArguments: true
+#BinPackParameters: true
+#AllowShortFunctionsOnASingleLine: None
 
-UseTab: Never
-AllowShortFunctionsOnASingleLine: None
-IndentCaseLabels: true
+# Finalized
 TrimTrailingWhitespace: true
-
-ColumnLimit: 0
-
-# namespace
 NamespaceIndentation: All
 FixNamespaceComments: false
-
-MaxEmptyLinesToKeep: 0
-
-KeepEmptyLinesAtTheStartOfBlocks: false
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 0
+IndentCaseLabels: true
+SpaceBeforeCpp11BracedList: true
