@@ -5,7 +5,7 @@
 
 class CustomButton: public juce::Button {
 public:
-  CustomButton(const juce::String& buttonText): juce::Button(buttonText), displayText(buttonText) {
+  CustomButton(const juce::String& buttonText) : juce::Button(buttonText), displayText(buttonText) {
     setMouseCursor(juce::MouseCursor::PointingHandCursor);
   }
   void paintButton(juce::Graphics& g, bool isMouseOverButton, bool isButtonDown) override {
@@ -15,14 +15,14 @@ public:
     if (getToggleState()) {
       g.setColour(config::theme);
       g.drawRect(bounds, 2.0f);
-    }
-    else {
+    } else {
       g.setColour(config::buttonDisabled);
       g.drawRect(bounds, 1.0f);
     }
     g.setFont(13.0f);
     g.drawText(displayText, getLocalBounds(), juce::Justification::centred);
   }
+
 private:
   juce::String displayText;
 };
@@ -47,7 +47,7 @@ public:
   void timerCallback() override {
     float elapsed = (float)juce::Time::getMillisecondCounter() - pressStartTime;
     float holdTime = 650.0f;
-    progress = juce::jlimit(0.0f, 1.0f,elapsed / holdTime);
+    progress = juce::jlimit(0.0f, 1.0f, elapsed / holdTime);
     if (progress >= 1.0f) {
       stopTimer();
       progress = 0.0f;
@@ -68,14 +68,14 @@ public:
     if (isButtonDown || getToggleState()) {
       g.setColour(mainColour);
       g.drawRect(getLocalBounds().toFloat(), 2.0f);
-    }
-    else {
+    } else {
       g.setColour(config::buttonDisabled);
       g.drawRect(getLocalBounds().toFloat(), 1.0f);
     }
     g.setFont(13.0f);
     g.drawText(displayText, getLocalBounds(), juce::Justification::centred);
   }
+
 private:
   juce::String displayText;
   juce::Colour mainColour;
@@ -85,7 +85,7 @@ private:
 
 class SortButton: public juce::Button {
 public:
-  SortButton(const juce::String& buttonText, juce::Colour baseColour): juce::Button(buttonText), displayText(buttonText), mainColour(baseColour) {
+  SortButton(const juce::String& buttonText, juce::Colour baseColour) : juce::Button(buttonText), displayText(buttonText), mainColour(baseColour) {
     setMouseCursor(juce::MouseCursor::PointingHandCursor);
   }
   void paintButton(juce::Graphics& g, bool isMouseOverButton, bool isButtonDown) override {
@@ -95,14 +95,14 @@ public:
     if (getToggleState() || isButtonDown) {
       g.setColour(mainColour);
       g.drawRect(bounds, 2.0f);
-    }
-    else {
+    } else {
       g.setColour(config::buttonDisabled);
       g.drawRect(bounds, 1.0f);
     }
     g.setFont(13.0f);
     g.drawText(displayText, getLocalBounds(), juce::Justification::centred);
   }
+
 private:
   juce::String displayText;
   juce::Colour mainColour;
@@ -110,7 +110,7 @@ private:
 
 class CustomIconButton: public juce::Button {
 public:
-  CustomIconButton(const char* svgData, int svgSize): juce::Button("IconButton") {
+  CustomIconButton(const char* svgData, int svgSize) : juce::Button("IconButton") {
     if (svgData != nullptr) {
       drawable = juce::Drawable::createFromSVG(*juce::XmlDocument::parse(juce::String::fromUTF8(svgData, svgSize)));
     }
@@ -123,8 +123,7 @@ public:
     if (getToggleState()) {
       g.setColour(config::theme);
       g.drawRect(bounds, 2.0f);
-    }
-    else {
+    } else {
       g.setColour(config::buttonDisabled);
       g.drawRect(bounds, 1.0f);
     }
@@ -133,6 +132,7 @@ public:
       drawable->drawWithin(g, bounds.reduced(6.0f), juce::RectanglePlacement::centred, 1.0f);
     }
   }
+
 private:
   std::unique_ptr<juce::Drawable> drawable;
 };
@@ -187,6 +187,7 @@ public:
     bandSliders[1].setTooltip("Frequency (Hz)");
     bandSliders[2].setTooltip("Q / Bandwidth");
   }
+
 private:
   static constexpr int margin = 2;
   CustomButton bypassButton {config::ID_BAND_BYPASS};
@@ -210,11 +211,12 @@ public:
 
 class MyTooltipWindow: public juce::TooltipWindow {
 public:
-  MyTooltipWindow(Component* p): TooltipWindow(p) {
+  MyTooltipWindow(Component* p) : TooltipWindow(p) {
   }
   juce::String getTipFor(juce::Component& c) override {
     auto tip = TooltipWindow::getTipFor(c);
-    if (onTipChanged) onTipChanged(tip);
+    if (onTipChanged)
+      onTipChanged(tip);
     return "";
   }
   std::function<void(const juce::String&)> onTipChanged;
@@ -222,8 +224,7 @@ public:
 
 class QuasarEQAudioProcessorEditor: public juce::AudioProcessorEditor {
 public:
-
-  QuasarEQAudioProcessorEditor(QuasarEQAudioProcessor& p): AudioProcessorEditor(&p), audioProcessor(p), visualizerComponent(p) {
+  QuasarEQAudioProcessorEditor(QuasarEQAudioProcessor& p) : AudioProcessorEditor(&p), audioProcessor(p), visualizerComponent(p) {
     setLookAndFeel(&customLNF);
 
     addAndMakeVisible(infoLabel);
@@ -232,7 +233,7 @@ public:
     infoLabel.setJustificationType(juce::Justification::centredLeft);
     infoLabel.setText("Hover over controls for info.", juce::dontSendNotification);
     customTooltipWindow.onTipChanged = [this](const juce::String& tip) {
-      if (tip.isNotEmpty()){
+      if (tip.isNotEmpty()) {
         infoLabel.setText(tip, juce::dontSendNotification);
       }
     };
@@ -381,13 +382,11 @@ private:
   MyTooltipWindow customTooltipWindow {this};
   juce::Label infoLabel;
 
-  LongPressButton initializeButton {"RESET",config::initialize};
+  LongPressButton initializeButton {"RESET", config::initialize};
 
   static auto getMasterGainIDs() -> const std::array<juce::String, 2>& {
-    static const std::array<juce::String, 2> ids
-    {
-      config::ID_OUT_GAIN_0, config::ID_OUT_GAIN_1
-    };
+    static const std::array<juce::String, 2> ids {
+        config::ID_OUT_GAIN_0, config::ID_OUT_GAIN_1};
     return ids;
   }
 };

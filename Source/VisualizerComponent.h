@@ -1,14 +1,14 @@
 #pragma once
 
-#include <JuceHeader.h>
+#include "PathProducer.h"
 #include "juce_LookAndFeel.h"
 #include "juce_PluginProcessor.h"
-#include "PathProducer.h"
 #include "zlth_dsp_fft_resampler510.h"
+#include <JuceHeader.h>
 
 class VisualizerComponent: public juce::Component, private juce::AsyncUpdater, public juce::AudioProcessorValueTreeState::Listener {
 public:
-  VisualizerComponent(QuasarEQAudioProcessor& p): audioProcessor(p), pathProducer(audioProcessor.channelFifo), analyzerThread(pathProducer, *this) {
+  VisualizerComponent(QuasarEQAudioProcessor& p) : audioProcessor(p), pathProducer(audioProcessor.channelFifo), analyzerThread(pathProducer, *this) {
     for (int i = 0; i < config::BAND_COUNT; ++i) {
       for (const auto& prefix : config::bandParamPrefixes) {
         audioProcessor.apvts.addParameterListener(config::toID(prefix, i), this);
@@ -72,7 +72,8 @@ public:
     auto spectrumAreaW = spectrumArea.getWidth();
     auto spectrumAreaB = spectrumArea.getBottom();
     for (int i = 0; i < config::BAND_COUNT; ++i) {
-      if (getBandParamValue(config::ID_BAND_BYPASS, i) > 0.5f) continue;
+      if (getBandParamValue(config::ID_BAND_BYPASS, i) > 0.5f)
+        continue;
       float x = editorFreqToCurveArea(getBandParamValue(config::ID_BAND_FREQ, i));
       float y = editorGainToCurveArea(getBandParamValue(config::ID_BAND_GAIN, i));
       const int pointSize = 14;
@@ -107,9 +108,11 @@ public:
       return;
     }
     draggingBand = getClosestBand(e.position);
-    if (draggingBand != NoBandSelected) return;
+    if (draggingBand != NoBandSelected)
+      return;
     int availableIdx = findNextAvailableBand();
-    if (availableIdx == NoBandSelected) return;
+    if (availableIdx == NoBandSelected)
+      return;
     draggingBand = availableIdx;
 
     auto [mouseX, mouseY] = e.position;
@@ -150,10 +153,11 @@ public:
   }
   std::function<int()> getFilterModeCallback;
   std::function<int()> getChannelModeCallback;
+
 private:
   class AnalyzerThread: public juce::Thread {
   public:
-    AnalyzerThread(PathProducer& producer, VisualizerComponent& comp): juce::Thread("FFT Analyzer Thread"), producer(producer), responseCurveComponent(comp) {
+    AnalyzerThread(PathProducer& producer, VisualizerComponent& comp) : juce::Thread("FFT Analyzer Thread"), producer(producer), responseCurveComponent(comp) {
       startThread();
     };
     ~AnalyzerThread() override {
@@ -168,6 +172,7 @@ private:
         juce::Thread::sleep(THREAD_SLEEP_TIME);
       }
     };
+
   private:
     PathProducer& producer;
     VisualizerComponent& responseCurveComponent;
@@ -178,10 +183,12 @@ private:
     const float toleranceRadius = 12.0f;
     const float thresholdSq = toleranceRadius * toleranceRadius;
     for (int i = 0; i < config::BAND_COUNT; ++i) {
-      if (getBandParamValue(config::ID_BAND_BYPASS, i) > 0.5f) continue;
+      if (getBandParamValue(config::ID_BAND_BYPASS, i) > 0.5f)
+        continue;
       float x = editorFreqToCurveArea(getBandParamValue(config::ID_BAND_FREQ, i));
       float y = editorGainToCurveArea(getBandParamValue(config::ID_BAND_GAIN, i));
-      if (mousePos.getDistanceSquaredFrom({x, y}) < thresholdSq) return i;
+      if (mousePos.getDistanceSquaredFrom({x, y}) < thresholdSq)
+        return i;
     }
     return NoBandSelected;
   }
@@ -293,7 +300,7 @@ private:
       auto load = [&](const juce::String& prefix) {
         return apvts.getRawParameterValue(config::toID(prefix, b))->load();
       };
-      auto p0 = std::tan(std::numbers::pi_v<float> *load(config::ID_BAND_FREQ) / sr);
+      auto p0 = std::tan(std::numbers::pi_v<float> * load(config::ID_BAND_FREQ) / sr);
       auto p1 = 1.0f / std::max(load(config::ID_BAND_QUAL), 0.0001f);
       auto p2 = zlth::unit::dbToMagFourthRoot(load(config::ID_BAND_GAIN));
       bool isActive = load(config::ID_BAND_BYPASS) < 0.5f;
@@ -302,7 +309,7 @@ private:
       auto b0 = (isActive && (mode == 0 || mode == 1)) ? type : zlth::dsp::Filter::FilterType::PassThrough;
       auto b1 = (isActive && (mode == 0 || mode == 2)) ? type : zlth::dsp::Filter::FilterType::PassThrough;
       for (int i = 0; i < size; ++i) {
-        float f_ = std::tan(std::numbers::pi_v<float> *std::min(mapToLog(i, 0, size, config::PARAM_FREQ_MIN, config::PARAM_FREQ_MAX) / sr, 0.4999f));
+        float f_ = std::tan(std::numbers::pi_v<float> * std::min(mapToLog(i, 0, size, config::PARAM_FREQ_MIN, config::PARAM_FREQ_MAX) / sr, 0.4999f));
         curvePoints[0][i] *= std::norm(zlth::dsp::Filter::get_response(f_, b0, p0, p1, p2));
         curvePoints[1][i] *= std::norm(zlth::dsp::Filter::get_response(f_, b1, p0, p1, p2));
       }
@@ -313,8 +320,7 @@ private:
         auto pos = editorGainToCurveArea(zlth::unit::magSqToDB(curvePoints[j][i]));
         if (i == 0) {
           responseCurvePath[j].startNewSubPath(x, pos);
-        }
-        else {
+        } else {
           responseCurvePath[j].lineTo(x, pos);
         }
       };
@@ -331,7 +337,8 @@ private:
     auto spectrumAreaB = spectrumArea.getBottom();
     targetPoints.clear();
     targetPath.clear();
-    if (sourcePath.size() != 2048) return;
+    if (sourcePath.size() != 2048)
+      return;
     targetPoints.reserve(sourcePath.size());
     auto resampled = resampler.resample(sourcePath.data(), audioProcessor.getSampleRate());
     for (int i = 1; i < resampled.size(); ++i) {
@@ -354,7 +361,8 @@ private:
     for (size_t i = 255; i < targetPoints.size(); ++i) {
       targetPath.lineTo(targetPoints[i]);
     }
-    if (!shouldClosePath) return;
+    if (!shouldClosePath)
+      return;
     targetPath.lineTo(targetPoints.back().x, spectrumAreaB);
     targetPath.lineTo(targetPoints.front().x, spectrumAreaB);
     targetPath.closeSubPath();

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <JuceHeader.h>
 #include "config.h"
+#include <JuceHeader.h>
 
 class CustomLNF: public juce::LookAndFeel_V4 {
 public:

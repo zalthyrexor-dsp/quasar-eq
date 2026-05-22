@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include <JuceHeader.h>
+#include <array>
 #include <span>
 
 template <typename T, int Capacity = 32>
@@ -32,6 +32,7 @@ struct Fifo {
   T& getBufferAt(int index) {
     return buffers[index];
   }
+
 private:
   std::array<T, Capacity> buffers;
   juce::AbstractFifo fifo {Capacity};
@@ -91,6 +92,7 @@ struct SampleFifo {
   bool pull(std::vector<float>& target) {
     return fifo.pull(target);
   }
+
 private:
   int writeIndex = 0;
   std::vector<float> samplesToFill;

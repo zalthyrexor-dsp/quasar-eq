@@ -2,11 +2,8 @@
 #include "juce_PluginEditor.h"
 #include "unit.h"
 
-QuasarEQAudioProcessor::QuasarEQAudioProcessor():
-  AudioProcessor(BusesProperties().
-    withInput("Input", juce::AudioChannelSet::stereo(), true).
-    withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-  apvts(*this, &undoManager, config::ID_PARAMETERS, createParameterLayout()) {
+QuasarEQAudioProcessor::QuasarEQAudioProcessor() : AudioProcessor(BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), true).withOutput("Output", juce::AudioChannelSet::stereo(), true)),
+                                                   apvts(*this, &undoManager, config::ID_PARAMETERS, createParameterLayout()) {
   apvts.addParameterListener(config::ID_OUT_GAIN_0, this);
   apvts.addParameterListener(config::ID_OUT_GAIN_1, this);
   for (int i = 0; i < config::BAND_COUNT; ++i) {
@@ -25,9 +22,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout QuasarEQAudioProcessor::crea
   };
   auto makeAttrs = [](int decimals, const juce::String& label) {
     return juce::AudioParameterFloatAttributes()
-      .withStringFromValueFunction([decimals](float v, int) { return juce::String(v, decimals); })
-      .withValueFromStringFunction([](const juce::String& s) { return s.getFloatValue(); })
-      .withLabel(label);
+        .withStringFromValueFunction([decimals](float v, int) { return juce::String(v, decimals); })
+        .withValueFromStringFunction([](const juce::String& s) { return s.getFloatValue(); })
+        .withLabel(label);
   };
   juce::AudioProcessorValueTreeState::ParameterLayout layout;
   juce::NormalisableRange<float> gainRange {config::PARAM_GAIN_MIN, config::PARAM_GAIN_MAX};
@@ -84,7 +81,7 @@ void QuasarEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
   if (auto flags = updateFlags.exchange(0)) {
     updateBands(flags);
   }
-  if(updateGlobalFlag.exchange(false)){
+  if (updateGlobalFlag.exchange(false)) {
     update_global();
   }
   const auto numSamples = static_cast<size_t>(buffer.getNumSamples());
@@ -105,8 +102,7 @@ void QuasarEQAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce
 void QuasarEQAudioProcessor::parameterChanged(const juce::String& parameterID, float) {
   if (parameterID == config::ID_OUT_GAIN_0 || parameterID == config::ID_OUT_GAIN_1) {
     updateGlobalFlag.store(true);
-  }
-  else {
+  } else {
     updateFlags.fetch_or(1u << config::toIndex(parameterID));
   }
 }
@@ -118,7 +114,7 @@ void QuasarEQAudioProcessor::updateBands(uint32_t flags) {
       auto load = [this, i](const juce::String& prefix) {
         return apvts.getRawParameterValue(config::toID(prefix, i))->load();
       };
-      auto p0 = std::tan(std::numbers::pi_v<float> *std::min(load(config::ID_BAND_FREQ) / sr, 0.4999f));
+      auto p0 = std::tan(std::numbers::pi_v<float> * std::min(load(config::ID_BAND_FREQ) / sr, 0.4999f));
       auto p1 = 1.0f / std::max(load(config::ID_BAND_QUAL), 0.0001f);
       auto p2 = zlth::unit::dbToMagFourthRoot(load(config::ID_BAND_GAIN));
       filters[0][i].set_coefficients(p0, p1, p2);

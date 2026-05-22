@@ -1,9 +1,9 @@
 #pragma once
 
-#include <vector>
+#include "unit.h"
 #include "zlth_fifo.h"
 #include "zlth_simd.h"
-#include "unit.h"
+#include <vector>
 
 struct SpectrumRenderData {
   std::vector<float> spectrumDb;
@@ -14,7 +14,7 @@ struct SpectrumRenderData {
 
 class PathProducer {
 public:
-  PathProducer(std::array<SampleFifo, 2>& leftScsf): fifo(leftScsf) {
+  PathProducer(std::array<SampleFifo, 2>& leftScsf) : fifo(leftScsf) {
     decibelsPeak.fill(-100.0f);
     decibelsCurrent.fill(0.0f);
     for (int i = 0; i < 32; ++i) {
@@ -24,7 +24,7 @@ public:
     }
   }
   void process(double sampleRate) {
-    std::array< std::vector<float>, 2> buffer {};
+    std::array<std::vector<float>, 2> buffer {};
     while (fifo[0].getNumAvailable() > 0 && fifo[1].getNumAvailable() > 0) {
       if (!fifo[0].pull(buffer[0]) || !fifo[1].pull(buffer[1])) {
         continue;
@@ -102,6 +102,7 @@ public:
     pathFifo.finishedRead();
     return true;
   }
+
 private:
   static constexpr int FFT_ORDER {12};
   static constexpr int FFT_SIZE {1 << FFT_ORDER};
@@ -113,7 +114,7 @@ private:
   std::array<float, FFT_SIZE_HALF> decibelsCurrent {};
   std::array<float, FFT_SIZE_HALF> smoothedMagnitudes {};
   std::array<float, 4> smoothedPeakLinear {0.0f, 0.0f, 0.0f, 0.0f};
-  std::array<float, 4> meterLevelsPeakDb {-100.0f, -100.0f,-100.0f, -100.0f};
+  std::array<float, 4> meterLevelsPeakDb {-100.0f, -100.0f, -100.0f, -100.0f};
   std::array<SampleFifo, 2>& fifo;
   Fifo<SpectrumRenderData> pathFifo;
   juce::dsp::WindowingFunction<float> windowing {FFT_SIZE, juce::dsp::WindowingFunction<float>::blackmanHarris, true};

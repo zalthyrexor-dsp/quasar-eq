@@ -66,25 +66,24 @@ namespace config {
 
   inline constexpr int iconCount {8};
   inline const std::array<const char*, iconCount> iconData {
-    BinaryData::hp_svg,
-    BinaryData::lp_svg,
-    BinaryData::hs_svg,
-    BinaryData::ls_svg,
-    BinaryData::tilt_svg,
-    BinaryData::peak_svg,
-    BinaryData::notch_svg,
-    BinaryData::bp_svg,
+      BinaryData::hp_svg,
+      BinaryData::lp_svg,
+      BinaryData::hs_svg,
+      BinaryData::ls_svg,
+      BinaryData::tilt_svg,
+      BinaryData::peak_svg,
+      BinaryData::notch_svg,
+      BinaryData::bp_svg,
   };
   inline const std::array<const int, iconCount> iconSize {
-    BinaryData::hp_svgSize,
-    BinaryData::lp_svgSize,
-    BinaryData::hs_svgSize,
-    BinaryData::ls_svgSize,
-    BinaryData::tilt_svgSize,
-    BinaryData::peak_svgSize,
-    BinaryData::notch_svgSize,
-    BinaryData::bp_svgSize
-  };
+      BinaryData::hp_svgSize,
+      BinaryData::lp_svgSize,
+      BinaryData::hs_svgSize,
+      BinaryData::ls_svgSize,
+      BinaryData::tilt_svgSize,
+      BinaryData::peak_svgSize,
+      BinaryData::notch_svgSize,
+      BinaryData::bp_svgSize};
 
   inline juce::String IndexToID(int index) {
     return juce::String(index + 1);
