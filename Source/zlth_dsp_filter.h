@@ -1,11 +1,11 @@
 #pragma once
 
+#include "forceinline.h"
 #include <algorithm>
 #include <cmath>
 #include <complex>
 #include <numbers>
 #include <span>
-#include "forceinline.h"
 
 namespace zlth::dsp {
   class Filter final {
@@ -14,7 +14,15 @@ namespace zlth::dsp {
     ~Filter() = default;
 
     enum class FilterType {
-      HighPass, LowPass, HighShelf, LowShelf, Tilt, Bell, Notch, BandPass, PassThrough
+      HighPass,
+      LowPass,
+      HighShelf,
+      LowShelf,
+      Tilt,
+      Bell,
+      Notch,
+      BandPass,
+      PassThrough
     };
 
     FORCEINLINE static std::complex<float> get_response(float g_eval, FilterType f, float p0, float p1, float p2) noexcept {
@@ -40,11 +48,9 @@ namespace zlth::dsp {
     FORCEINLINE void process(std::span<float> span) noexcept {
       if (std::exchange(crossfade_state, false)) {
         process_impl_crossfade(span);
-      }
-      else if (cf != FilterType::PassThrough && std::exchange(lerp_state, false)) {
+      } else if (cf != FilterType::PassThrough && std::exchange(lerp_state, false)) {
         process_impl_lerp(span);
-      }
-      else if (cf != FilterType::PassThrough) {
+      } else if (cf != FilterType::PassThrough) {
         process_impl(span);
       }
     }
@@ -65,65 +71,54 @@ namespace zlth::dsp {
     }
 
   private:
-
     template <typename Setter>
     FORCEINLINE static void calculate_coefficients(FilterType f, float g_, float k_, float a_, Setter&& set) noexcept {
       switch (f) {
-        case FilterType::LowPass:
-        {
+        case FilterType::LowPass: {
           set(g_, k_, 0.0f, 0.0f, 1.0f);
           break;
         }
-        case FilterType::HighPass:
-        {
+        case FilterType::HighPass: {
           set(g_, k_, 1.0f, -k_, -1.0f);
           break;
         }
-        case FilterType::Notch:
-        {
+        case FilterType::Notch: {
           set(g_, k_, 1.0f, -k_, 0.0f);
           break;
         }
-        case FilterType::BandPass:
-        {
+        case FilterType::BandPass: {
           set(g_, k_, 0.0f, k_, 0.0f);
           break;
         }
-        case FilterType::Bell:
-        {
+        case FilterType::Bell: {
           const float a2 {a_ * a_};
           const float a4 {a2 * a2};
           set(g_, k_ / a2, 1.0f, k_ * (a4 - 1.0f) / a2, 0.0f);
           break;
         }
-        case FilterType::LowShelf:
-        {
+        case FilterType::LowShelf: {
           const float a2 {a_ * a_};
           const float a4 {a2 * a2};
           set(g_ / a_, k_, 1.0f, k_ * (a2 - 1.0f), a4 - 1.0f);
           break;
         }
-        case FilterType::HighShelf:
-        {
+        case FilterType::HighShelf: {
           const float a2 {a_ * a_};
           const float a4 {a2 * a2};
           set(g_ * a_, k_, a4, k_ * (a2 - a4), 1.0f - a4);
           break;
         }
-        case FilterType::Tilt:
-        {
+        case FilterType::Tilt: {
           const float a2 {a_ * a_};
           const float a4 {a2 * a2};
           set(g_ * a_, k_, a2, k_ * (1.0f - a2), (1.0f - a4) / a2);
           break;
         }
-        case FilterType::PassThrough:
-        {
+        case FilterType::PassThrough: {
           set(g_, k_, 1.0f, 0.0f, 0.0f);
           break;
         }
-        default:
-        {
+        default: {
           set(g_, k_, 1.0f, 0.0f, 0.0f);
           break;
         }

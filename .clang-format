@@ -1,12 +1,5 @@
-BasedOnStyle: LLVM
-
-#MaxEmptyLinesToKeep: 1
-#KeepEmptyLinesAtTheStartOfBlocks: false
-#BinPackArguments: true
-#BinPackParameters: true
-#AllowShortFunctionsOnASingleLine: None
-
 # Finalized
+BasedOnStyle: LLVM
 TrimTrailingWhitespace: true
 NamespaceIndentation: All
 FixNamespaceComments: false
@@ -16,3 +9,11 @@ UseTab: Never
 ColumnLimit: 0
 IndentCaseLabels: true
 SpaceBeforeCpp11BracedList: true
+PointerAlignment: Left
+SpaceBeforeInheritanceColon: false
+
+#MaxEmptyLinesToKeep: 1
+#KeepEmptyLinesAtTheStartOfBlocks: false
+#BinPackArguments: true
+#BinPackParameters: true
+#AllowShortFunctionsOnASingleLine: None

@@ -1,9 +1,9 @@
 #pragma once
 
+#include "forceinline.h"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
-#include "forceinline.h"
 
 namespace zlth::unit {
   inline constexpr float ln10_div_20 {std::numbers::ln10_v<float> / 20.0f};
