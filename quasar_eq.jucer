@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="LqgQR1" name="qsr EQ 6" projectType="audioplug" useAppConfig="0"
+<JUCERPROJECT id="LqgQR1" name="qsr EQ" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" version="6.0.4"
-              companyName="Zalthyrexor" companyCopyright="Copyright (c) 2026 Zalthyrexor"
+              companyName="zalthyrexor" companyCopyright="Copyright (c) 2026 Zalthyrexor"
               pluginCode="K1wg" pluginManufacturerCode="Zlth" pluginVST3Category="EQ"
-              cppLanguageStandard="20" pluginFormats="buildVST3">
-  <MAINGROUP id="utedqW" name="qsr EQ 6">
+              cppLanguageStandard="20" pluginFormats="buildStandalone">
+  <MAINGROUP id="utedqW" name="qsr EQ">
     <GROUP id="{0EDF45D0-BD2D-4D51-8384-7B4FC15CAE2F}" name="Resources">
       <FILE id="cJv9Nd" name="bp.svg" compile="0" resource="1" file="Resources/bp.svg"/>
       <FILE id="Tis66v" name="hp.svg" compile="0" resource="1" file="Resources/hp.svg"/>

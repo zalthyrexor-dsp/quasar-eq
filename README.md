@@ -1,6 +1,6 @@
 ![Screenshot](./screenshots/quasar_eq_v6_0_4.png)
 
-# Quasar EQ by Zalthyrexor
+# Quasar EQ by zalthyrexor
 **Zero noise, zero latency.**  
 **One click to create a filter.**
 
