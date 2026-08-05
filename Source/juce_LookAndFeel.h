@@ -6,12 +6,12 @@
 class CustomLNF: public juce::LookAndFeel_V4 {
 public:
   CustomLNF() {
-    setColour(juce::Label::textColourId, config::text);
-    setColour(juce::Label::backgroundWhenEditingColourId, config::pluginBackground);
+    setColour(juce::Label::textColourId, config::z_text);
+    setColour(juce::Label::backgroundWhenEditingColourId, config::z_pluginBackground);
 
-    setColour(juce::PopupMenu::backgroundColourId, config::textBackground);
-    setColour(juce::PopupMenu::textColourId, config::text);
-    setColour(juce::PopupMenu::highlightedBackgroundColourId, config::theme);
+    setColour(juce::PopupMenu::backgroundColourId, config::z_textBackground);
+    setColour(juce::PopupMenu::textColourId, config::z_text);
+    setColour(juce::PopupMenu::highlightedBackgroundColourId, config::z_theme);
     setColour(juce::PopupMenu::highlightedTextColourId, juce::Colours::white);
   }
   void drawRotarySlider(juce::Graphics& g, int x, int y, int w, int h, float sliderPosProportional, float rotaryStartAngle, float rotaryEndAngle, juce::Slider& slider) override {
@@ -29,22 +29,22 @@ public:
     auto lineThickness = 3.5f;
     auto toAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
     auto centerAngle = rotaryStartAngle + (rotaryEndAngle - rotaryStartAngle) * 0.5f;
-    g.setColour(config::slider);
+    g.setColour(config::z_slider);
     auto knobRadius = radius - lineThickness - 2.0f;
 
     auto knobBounds = sliderBounds.reduced(lineThickness + 2.0f);
 
     g.fillEllipse(knobBounds);
-    g.setColour(config::sliderRim);
+    g.setColour(config::z_sliderRim);
     g.drawEllipse(knobBounds, 2.0f);
 
     backgroundArc.addCentredArc(centerX, centerY, radius, radius, 0.0f, rotaryStartAngle, rotaryEndAngle, true);
-    g.setColour(config::groove);
+    g.setColour(config::z_groove);
     g.strokePath(backgroundArc, juce::PathStrokeType(lineThickness, juce::PathStrokeType::curved, juce::PathStrokeType::butt));
     valueArc.addCentredArc(centerX, centerY, radius, radius, 0.0f, centerAngle, toAngle, true);
-    g.setColour(config::theme);
+    g.setColour(config::z_theme);
     g.strokePath(valueArc, juce::PathStrokeType(lineThickness, juce::PathStrokeType::curved, juce::PathStrokeType::butt));
-    g.setColour(config::sliderPointer);
+    g.setColour(config::z_sliderPointer);
     auto pointerWidth = 2.0f;
     auto pointerLength = 6.0f;
     pointer.addRoundedRectangle(-pointerWidth * 0.5f, -knobRadius, pointerWidth, pointerLength, 1.0f);
@@ -52,7 +52,7 @@ public:
     g.fillPath(pointer);
   }
   void drawComboBox(juce::Graphics& g, int w, int h, bool isButtonDown, int buttonX, int buttonY, int buttonW, int buttonH, juce::ComboBox& box) override {
-    const auto color = config::textBackground;
+    const auto color = config::z_textBackground;
     const auto bounds = juce::Rectangle<int>(0, 0, w, h).toFloat();
     g.setColour(color);
     g.fillRect(bounds);
@@ -70,21 +70,21 @@ public:
   void drawLinearSlider(juce::Graphics& g, int x, int y, int w, int h, float pos, float min, float max, const juce::Slider::SliderStyle style, juce::Slider& slider) override {
     auto bounds {juce::Rectangle<float>(x, y, w, h).reduced(10.0f, 5.0f)};
     auto track = bounds.withSizeKeepingCentre(6.0f, h);
-    g.setColour(config::groove);
+    g.setColour(config::z_groove);
     g.fillRect(track);
     float zeroPos = (min + max) * 0.5f;
     auto top = juce::jmin(zeroPos, pos);
     auto bottom = juce::jmax(zeroPos, pos);
     auto valueRect = track.withTop(top).withBottom(bottom);
-    g.setColour(config::theme);
+    g.setColour(config::z_theme);
     g.fillRect(valueRect);
     auto thumbRect {juce::Rectangle<float>(w, 12.0f)};
     thumbRect.setCentre(track.getCentreX(), pos);
-    g.setColour(config::slider);
+    g.setColour(config::z_slider);
     g.fillRect(thumbRect);
-    g.setColour(config::sliderRim);
+    g.setColour(config::z_sliderRim);
     g.drawRect(thumbRect, 2.0f);
-    g.setColour(config::sliderPointer);
+    g.setColour(config::z_sliderPointer);
     g.fillRect(thumbRect.withSizeKeepingCentre(w / 4.0f, 2.0f));
   }
 };

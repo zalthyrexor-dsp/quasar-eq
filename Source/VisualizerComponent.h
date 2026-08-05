@@ -1,5 +1,6 @@
 #pragma once
 
+#include "unit.h"
 #include "PathProducer.h"
 #include "juce_LookAndFeel.h"
 #include "juce_PluginProcessor.h"
@@ -46,22 +47,23 @@ public:
       auto x = meterArea.getX() + (stepW * i);
       auto h = remap(localPath.meterLevelsDb[i], config::METER_MIN, config::METER_MAX, meterArea.getBottom(), meterArea.getY());
       auto p = remap(localPath.meterLevelsPeakDb[i], config::METER_MIN, config::METER_MAX, meterArea.getBottom(), meterArea.getY());
-      g.setColour(config::theme.withAlpha(0.55f));
+      g.setColour(config::z_theme.withAlpha(0.55f));
       g.fillRect(juce::Rectangle<float>::leftTopRightBottom(x, h, x + stepW, meterArea.getBottom()));
-      g.setColour(config::theme);
+      g.setColour(config::z_theme);
       g.fillRect(x, p - peakLineThickness * 0.5f, stepW, peakLineThickness);
     }
     g.restoreState();
     g.saveState();
     g.reduceClipRegion(getCurveArea());
 
-    g.setColour(config::theme.withAlpha(0.45f));
+    g.setColour(config::z_theme.withAlpha(0.45f));
     g.fillPath(spectrumDb);
-    g.setColour(config::theme);
+    g.setColour(config::z_theme);
     g.strokePath(spectrumPeakDb, juce::PathStrokeType(1.5f));
-    g.setColour(config::side);
+
+    g.setColour(config::channel1);
     g.strokePath(responseCurvePath[1], juce::PathStrokeType(2.5f));
-    g.setColour(config::theme);
+    g.setColour(config::channel0);
     g.strokePath(responseCurvePath[0], juce::PathStrokeType(2.5f));
 
     g.restoreState();
@@ -77,9 +79,9 @@ public:
       float x = editorFreqToCurveArea(getBandParamValue(config::ID_BAND_FREQ, i));
       float y = editorGainToCurveArea(getBandParamValue(config::ID_BAND_GAIN, i));
       const int pointSize = 14;
-      g.setColour(config::textBackground);
+      g.setColour(config::z_textBackground);
       g.fillEllipse(x - pointSize * 0.5f, y - pointSize * 0.5f, pointSize, pointSize);
-      g.setColour(config::text);
+      g.setColour(config::z_text);
       g.drawEllipse(x - pointSize * 0.5f, y - pointSize * 0.5f, pointSize, pointSize, 1.5f);
       g.setFont(12.0f);
       drawLabel(g, config::IndexToID(i), x, y);
@@ -236,7 +238,7 @@ private:
       int x = editorFreqToCurveArea(f);
       g.setColour(gridColour);
       g.drawVerticalLine(x, curveArea.getY(), curveArea.getBottom());
-      g.setColour(config::text);
+      g.setColour(config::z_text);
       g.setFont(textSize);
       drawLabel(g, formatFreq(f), x, (int)curveArea.getBottom() + textSize);
       drawLabel(g, formatFreq(f), x, (int)curveArea.getY() - textSize);
@@ -245,7 +247,7 @@ private:
       int y = editorGainToCurveArea(db);
       g.setColour(db == 0.0f ? gridColour0db : gridColour);
       g.drawHorizontalLine(y, curveArea.getX(), curveArea.getRight());
-      g.setColour(config::text);
+      g.setColour(config::z_text);
       drawLabel(g, formatDb(db), (int)curveArea.getX() - textSize, y);
     }
 
@@ -253,11 +255,11 @@ private:
       int y = remap(db, config::METER_MAX, config::METER_MIN, meterArea.getY(), meterArea.getBottom());
       g.setColour(db == 0.0f ? gridColour0db : gridColour);
       g.drawHorizontalLine(y, meterArea.getX(), meterArea.getRight());
-      g.setColour(config::text);
+      g.setColour(config::z_text);
       drawLabel(g, formatDb(db), (int)meterArea.getX() - textSize, y);
     }
 
-    g.setColour(config::text);
+    g.setColour(config::z_text);
     const juce::String labels[] = {"M", "S", "L", "R"};
     const float meterWidth = meterArea.getWidth() * 0.25f;
     for (int i = 0; i < 4; ++i) {
@@ -302,7 +304,7 @@ private:
       };
       auto p0 = std::tan(std::numbers::pi_v<float> * load(config::ID_BAND_FREQ) / sr);
       auto p1 = 1.0f / std::max(load(config::ID_BAND_QUAL), 0.0001f);
-      auto p2 = zlth::unit::dbToMagFourthRoot(load(config::ID_BAND_GAIN));
+      auto p2 = zlth::unit::toMagFourthRoot(load(config::ID_BAND_GAIN));
       bool isActive = load(config::ID_BAND_BYPASS) < 0.5f;
       auto mode = static_cast<int>(load(config::ID_BAND_CHANNEL));
       auto type = static_cast<zlth::dsp::Filter::FilterType>((int)load(config::ID_BAND_FILTER));
@@ -317,7 +319,7 @@ private:
     for (int i = 0; i < size; ++i) {
       float x = remap(i, 0, size - 1, bounds.getX(), bounds.getRight());
       auto draw = [&](int j) {
-        auto pos = editorGainToCurveArea(zlth::unit::magSqToDB(curvePoints[j][i]));
+        auto pos = editorGainToCurveArea(zlth::unit::magSqToDB(std::max(curvePoints[j][i], 1e-10f)));
         if (i == 0) {
           responseCurvePath[j].startNewSubPath(x, pos);
         } else {

@@ -29,13 +29,13 @@ public:
       if (!fifo[0].pull(buffer[0]) || !fifo[1].pull(buffer[1])) {
         continue;
       }
+
       const int originalIncomingSize = buffer[0].size();
       const float deltaTime = originalIncomingSize / sampleRate;
-      const float spectrumSmoothing = 1.0f - std::exp(-deltaTime * 30.0f);
-      const float peakFallRate = 15.0f * deltaTime;
       const int useSize = std::min(originalIncomingSize, FFT_SIZE);
       const int sourceOffset = originalIncomingSize - useSize;
       const int copySize = FFT_SIZE - useSize;
+
       if (copySize > 0) {
         std::memmove(audioBuffer.data(), audioBuffer.data() + useSize, copySize * sizeof(float));
       }
@@ -48,38 +48,38 @@ public:
       windowing.multiplyWithWindowingTable(fftReal.data(), FFT_SIZE);
       fftJuce.performFrequencyOnlyForwardTransform(fftReal.data(), true);
 
-      zlth::simd::lerp_inplace(smoothedMagnitudes, fftReal, spectrumSmoothing);
-      zlth::simd::max_inplace(smoothedMagnitudes, fftReal);
-      zlth::simd::max_inplace(smoothedMagnitudes, 1e-10f);
+      const float smoothing0 = 1.0f - std::exp(-deltaTime * 30.0f);
+      const float smoothing1 = 1.0f - std::exp(-deltaTime * 10.0f);
+      const float smoothing2 = deltaTime * 15.0f;
+      const float smoothing3 = deltaTime * 6.0f;
 
-      zlth::simd::mag_to_db(decibelsCurrent, smoothedMagnitudes);
-      zlth::simd::sub_inplace(decibelsPeak, peakFallRate);
+      zlth::simd::lerp_inplace(smoothedMagnitudes, fftReal, smoothing0);
+      zlth::simd::max_inplace(smoothedMagnitudes, fftReal);
+
+      for (size_t i = 0; i < FFT_SIZE_HALF; ++i) {
+        decibelsCurrent[i] = zlth::unit::magToDB(std::max(smoothedMagnitudes[i], 1e-20f));
+      }
+
+      zlth::simd::sub_inplace(decibelsPeak, smoothing2);
       zlth::simd::max_inplace(decibelsPeak, decibelsCurrent);
 
-      const float meterFall = 1.0f - std::exp(-deltaTime * 10.0f);
-      const float meterFallRate = 6.0f * deltaTime;
-
-      for (int i = 0; i < 2; ++i) {
-        float temp = zlth::simd::get_abs_max(buffer[i]);
-        smoothedPeakLinear[i] += meterFall * (temp - smoothedPeakLinear[i]);
-        smoothedPeakLinear[i] = juce::jmax(temp, smoothedPeakLinear[i]);
-        meterLevelsPeakDb[i] -= meterFallRate;
-        meterLevelsPeakDb[i] = std::max(meterLevelsPeakDb[i], zlth::unit::magToDB(smoothedPeakLinear[i]));
-      }
+      z_temp0[0] = zlth::simd::get_abs_max(buffer[0]);
+      z_temp0[1] = zlth::simd::get_abs_max(buffer[1]);
       zlth::simd::hadamard_butterfly(buffer[0], buffer[1]);
-      for (int i = 2; i < 4; ++i) {
-        float temp = zlth::simd::get_abs_max(buffer[i - 2]);
-        smoothedPeakLinear[i] += meterFall * (temp - smoothedPeakLinear[i]);
-        smoothedPeakLinear[i] = juce::jmax(temp, smoothedPeakLinear[i]);
-        meterLevelsPeakDb[i] -= meterFallRate;
-        meterLevelsPeakDb[i] = std::max(meterLevelsPeakDb[i], zlth::unit::magToDB(smoothedPeakLinear[i]));
+      z_temp0[2] = zlth::simd::get_abs_max(buffer[0]);
+      z_temp0[3] = zlth::simd::get_abs_max(buffer[1]);
+
+      for (int i = 0; i < 4; ++i) {
+        smoothedPeakLinear[i] = std::max(z_temp0[i], smoothedPeakLinear[i] + smoothing1 * (z_temp0[i] - smoothedPeakLinear[i]));
+        z_temp1[i] = zlth::unit::magToDB(std::max(smoothedPeakLinear[i], 1e-20f));
+        meterLevelsPeakDb[i] = std::max(meterLevelsPeakDb[i] - smoothing3, z_temp1[i]);
       }
     }
     if (auto* renderData = pathFifo.getWriteBuffer()) {
       std::copy(decibelsCurrent.begin(), decibelsCurrent.end(), renderData->spectrumDb.begin());
       std::copy(decibelsPeak.begin(), decibelsPeak.end(), renderData->spectrumPeakDb.begin());
       for (int i = 0; i < 4; ++i) {
-        renderData->meterLevelsDb[i] = zlth::unit::magToDB(smoothedPeakLinear[i]);
+        renderData->meterLevelsDb[i] = z_temp1[i];
         renderData->meterLevelsPeakDb[i] = meterLevelsPeakDb[i];
       }
       pathFifo.finishedWrite();
@@ -115,6 +115,8 @@ private:
   std::array<float, FFT_SIZE_HALF> smoothedMagnitudes {};
   std::array<float, 4> smoothedPeakLinear {0.0f, 0.0f, 0.0f, 0.0f};
   std::array<float, 4> meterLevelsPeakDb {-100.0f, -100.0f, -100.0f, -100.0f};
+  std::array<float, 4> z_temp0 {0.0f, 0.0f, 0.0f, 0.0f};
+  std::array<float, 4> z_temp1 {0.0f, 0.0f, 0.0f, 0.0f};
   std::array<SampleFifo, 2>& fifo;
   Fifo<SpectrumRenderData> pathFifo;
   juce::dsp::WindowingFunction<float> windowing {FFT_SIZE, juce::dsp::WindowingFunction<float>::blackmanHarris, true};

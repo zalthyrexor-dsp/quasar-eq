@@ -13,10 +13,10 @@ public:
     g.setColour(juce::Colours::black);
     g.fillRect(bounds);
     if (getToggleState()) {
-      g.setColour(config::theme);
+      g.setColour(config::z_theme);
       g.drawRect(bounds, 2.0f);
     } else {
-      g.setColour(config::buttonDisabled);
+      g.setColour(config::z_buttonDisabled);
       g.drawRect(bounds, 1.0f);
     }
     g.setFont(13.0f);
@@ -69,7 +69,7 @@ public:
       g.setColour(mainColour);
       g.drawRect(getLocalBounds().toFloat(), 2.0f);
     } else {
-      g.setColour(config::buttonDisabled);
+      g.setColour(config::z_buttonDisabled);
       g.drawRect(getLocalBounds().toFloat(), 1.0f);
     }
     g.setFont(13.0f);
@@ -96,7 +96,7 @@ public:
       g.setColour(mainColour);
       g.drawRect(bounds, 2.0f);
     } else {
-      g.setColour(config::buttonDisabled);
+      g.setColour(config::z_buttonDisabled);
       g.drawRect(bounds, 1.0f);
     }
     g.setFont(13.0f);
@@ -121,10 +121,10 @@ public:
     g.setColour(juce::Colours::black);
     g.fillRect(bounds);
     if (getToggleState()) {
-      g.setColour(config::theme);
+      g.setColour(config::z_theme);
       g.drawRect(bounds, 2.0f);
     } else {
-      g.setColour(config::buttonDisabled);
+      g.setColour(config::z_buttonDisabled);
       g.drawRect(bounds, 1.0f);
     }
     if (drawable != nullptr) {
@@ -305,7 +305,7 @@ public:
   }
 
   void paint(juce::Graphics& g) override {
-    g.fillAll(config::pluginBackground);
+    g.fillAll(config::z_pluginBackground);
   }
 
   void resized() override {
@@ -382,7 +382,7 @@ private:
   MyTooltipWindow customTooltipWindow {this};
   juce::Label infoLabel;
 
-  LongPressButton initializeButton {"RESET", config::initialize};
+  LongPressButton initializeButton {"RESET", config::z_initialize};
 
   static auto getMasterGainIDs() -> const std::array<juce::String, 2>& {
     static const std::array<juce::String, 2> ids {

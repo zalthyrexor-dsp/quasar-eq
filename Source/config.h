@@ -1,5 +1,6 @@
 #pragma once
 
+#include <JuceHeader.h>
 #include <cmath>
 #include <numbers>
 
@@ -17,30 +18,33 @@ namespace config {
 
   inline constexpr float PARAM_FREQ_MIN {20.0f};
   inline constexpr float PARAM_FREQ_MAX {20000.0f};
-  inline constexpr float PARAM_FREQ_DEF {500.0f};
+
   inline constexpr float PARAM_QUAL_MIN {1.0f / 16.0f};
   inline constexpr float PARAM_QUAL_MAX {16.0f};
   inline constexpr float PARAM_QUAL_DEF {1.0f / std::numbers::sqrt2_v<float>};
+
   inline constexpr float PARAM_GAIN_MIN {-24.0f};
   inline constexpr float PARAM_GAIN_MAX {24.0f};
   inline constexpr float PARAM_GAIN_DEF {0.0f};
+
   inline constexpr float METER_MIN {-36.0f};
   inline constexpr float METER_MAX {12.0f};
+
   inline constexpr float FFT_MIN_DB {-90.0f};
   inline constexpr float FFT_MAX_DB {30.0f};
 
-  inline const juce::Colour red {0xffff2020};
-  inline const juce::Colour side {0xffff3d67};
-  inline const juce::Colour text {0xffffffff};
-  inline const juce::Colour theme {0xff4284ff};
-  inline const juce::Colour slider {0xff181818};
-  inline const juce::Colour groove {0xff101010};
-  inline const juce::Colour sliderRim {0xff505050};
-  inline const juce::Colour initialize {0xffff0000};
-  inline const juce::Colour sliderPointer {0xffffffff};
-  inline const juce::Colour buttonDisabled {0xff555555};
-  inline const juce::Colour textBackground {0xff000000};
-  inline const juce::Colour pluginBackground {0xff202020};
+  inline const juce::Colour channel0 {0xff4284ff};
+  inline const juce::Colour channel1 {0xffff3d67};
+  inline const juce::Colour z_text {0xffffffff};
+  inline const juce::Colour z_theme {0xff4284ff};
+  inline const juce::Colour z_slider {0xff181818};
+  inline const juce::Colour z_groove {0xff101010};
+  inline const juce::Colour z_sliderRim {0xff505050};
+  inline const juce::Colour z_initialize {0xffff0000};
+  inline const juce::Colour z_sliderPointer {0xffffffff};
+  inline const juce::Colour z_buttonDisabled {0xff555555};
+  inline const juce::Colour z_textBackground {0xff000000};
+  inline const juce::Colour z_pluginBackground {0xff202020};
 
   inline const juce::String ID_PARAMETERS {"PARAMETERS"};
   inline const juce::String ID_OUT_GAIN_0 {"OUT_GAIN_MID"};

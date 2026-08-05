@@ -1,23 +1,20 @@
 #pragma once
 
-#include "forceinline.h"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
 
 namespace zlth::unit {
-  inline constexpr float ln10_div_20 {std::numbers::ln10_v<float> / 20.0f};
-  inline constexpr float ln10_div_80 {std::numbers::ln10_v<float> / 80.0f};
-  FORCEINLINE inline float dbToMag(float value) {
-    return std::exp(ln10_div_20 * value);
+  [[nodiscard]] inline float toMag(float value) {
+    return std::exp(std::numbers::ln10_v<float> / 20.0f * value);
   }
-  FORCEINLINE inline float dbToMagFourthRoot(float value) {
-    return std::exp(ln10_div_80 * value);
+  [[nodiscard]] inline float toMagFourthRoot(float value) {
+    return std::exp(std::numbers::ln10_v<float> / 80.0f * value);
   }
-  FORCEINLINE inline float magToDB(float value, float min = 1e-20f) {
-    return 20.0f * std::log10(std::max(value, min));
+  [[nodiscard]] inline float magToDB(float value) {
+    return 20.0f / std::numbers::ln10_v<float> *std::log(value);
   }
-  FORCEINLINE inline float magSqToDB(float value, float min = 1e-10f) {
-    return 10.0f * std::log10(std::max(value, min));
+  [[nodiscard]] inline float magSqToDB(float value) {
+    return 10.0f / std::numbers::ln10_v<float> *std::log(value);
   }
 }

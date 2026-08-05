@@ -135,10 +135,4 @@ namespace zlth::simd {
     }
     return finalMax;
   }
-  FORCEINLINE static void mag_to_db(std::span<T> out, std::span<const T> in) {
-    size_t n = std::min(out.size(), in.size());
-    for (size_t i = 0; i < n; ++i) {
-      out[i] = zlth::unit::magToDB(in[i]);
-    }
-  }
 }
