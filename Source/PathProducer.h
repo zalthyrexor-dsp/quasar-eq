@@ -14,14 +14,11 @@ struct SpectrumRenderData {
 
 class PathProducer {
 public:
+
   PathProducer(std::array<SampleFifo, 2>& leftScsf): fifo(leftScsf) {
-    fft0.fill(0.0f);
     fft1.fill(0.0f);
-    tmp0.fill(0.0f);
     tmp1.fill(0.0f);
-    fft2.fill(db_init);
     fft3.fill(db_init);
-    tmp2.fill(db_init);
     tmp3.fill(db_init);
     for (int i = 0; i < 32; ++i) {
       auto& data = pathFifo.getBufferAt(i);
@@ -36,7 +33,6 @@ public:
       if (!fifo[0].pull(buffer[0]) || !fifo[1].pull(buffer[1])) {
         continue;
       }
-
       const int bufferSize = buffer[0].size();
       if (FFT_SIZE > bufferSize) {
         const int shiftSize = FFT_SIZE - bufferSize;
@@ -48,41 +44,32 @@ public:
       }
       std::copy(fft_.begin(), fft_.end(), fft0.begin());
       std::fill(fft0.begin() + FFT_SIZE, fft0.end(), 0.0f);
-
-      std::span FFTNormalizingSpan {fft0.data(), FFT_SIZE};
-      zlth::simd::mul_inplace(FFTNormalizingSpan, 1.0f / static_cast<float>(FFT_SIZE_HALF));
+      zlth::simd::mul_inplace({fft0.data(), FFT_SIZE}, 1.0f / static_cast<float>(FFT_SIZE_HALF));
       windowing.multiplyWithWindowingTable(fft0.data(), FFT_SIZE);
       fftJuce.performFrequencyOnlyForwardTransform(fft0.data(), true);
-
       const float deltaTime = bufferSize / sampleRate;
       const float smooth_fft1 = 1.0f - std::exp(-deltaTime * 30.0f);
       const float smooth_tmp1 = 1.0f - std::exp(-deltaTime * 10.0f);
       const float smooth_fft3 = deltaTime * 15.0f;
       const float smooth_tmp3 = deltaTime * 6.0f;
-
       zlth::simd::lerp_inplace(fft1, fft0, smooth_fft1);
       zlth::simd::max_inplace(fft1, fft0);
-
       for (size_t i = 0; i < FFT_SIZE_HALF; ++i) {
         fft2[i] = zlth::unit::qux<20.0f>(std::max(fft1[i], 1e-20f));
       }
-
       zlth::simd::sub_inplace(fft3, smooth_fft3);
       zlth::simd::max_inplace(fft3, fft2);
-
       tmp0[0] = zlth::simd::get_abs_max(buffer[0]);
       tmp0[1] = zlth::simd::get_abs_max(buffer[1]);
       zlth::simd::hadamard_butterfly(buffer[0], buffer[1]);
       tmp0[2] = zlth::simd::get_abs_max(buffer[0]);
       tmp0[3] = zlth::simd::get_abs_max(buffer[1]);
-
       for (int i = 0; i < 4; ++i) {
         tmp1[i] = std::max(tmp0[i], tmp1[i] + smooth_tmp1 * (tmp0[i] - tmp1[i]));
         tmp2[i] = zlth::unit::qux<20.0f>(std::max(tmp1[i], 1e-20f));
         tmp3[i] = std::max(tmp2[i], tmp3[i] - smooth_tmp3);
       }
     }
-
     if (auto* renderData = pathFifo.getWriteBuffer()) {
       std::copy(fft2.begin(), fft2.end(), renderData->s_fft2.begin());
       std::copy(fft3.begin(), fft3.end(), renderData->s_fft3.begin());
@@ -97,6 +84,7 @@ public:
   int getNumPathsAvailable() const {
     return pathFifo.getNumAvailableForReading();
   }
+
   bool getPath(SpectrumRenderData& path) {
     auto* renderData = pathFifo.getReadBuffer();
     if (renderData == nullptr) {
