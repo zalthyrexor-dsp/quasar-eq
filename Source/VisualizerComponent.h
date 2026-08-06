@@ -45,8 +45,8 @@ public:
 
     for (int i = 0; i < numMeters; ++i) {
       auto x = meterArea.getX() + (stepW * i);
-      auto h = remap(localPath.meterLevelsDb[i], config::METER_MIN, config::METER_MAX, meterArea.getBottom(), meterArea.getY());
-      auto p = remap(localPath.meterLevelsPeakDb[i], config::METER_MIN, config::METER_MAX, meterArea.getBottom(), meterArea.getY());
+      auto h = remap(localPath.s_tmp2[i], config::METER_MIN, config::METER_MAX, meterArea.getBottom(), meterArea.getY());
+      auto p = remap(localPath.s_tmp3[i], config::METER_MIN, config::METER_MAX, meterArea.getBottom(), meterArea.getY());
       g.setColour(config::z_theme.withAlpha(0.55f));
       g.fillRect(juce::Rectangle<float>::leftTopRightBottom(x, h, x + stepW, meterArea.getBottom()));
       g.setColour(config::z_theme);
@@ -212,8 +212,8 @@ private:
         juce::ScopedLock lock(pathLock);
         channelPathToDraw = pathData;
       }
-      updateSpectrumPath(pathData.spectrumDb, spectrumPoints, spectrumDb, true);
-      updateSpectrumPath(pathData.spectrumPeakDb, peakHoldPoints, spectrumPeakDb, false);
+      updateSpectrumPath(pathData.s_fft2, spectrumPoints, spectrumDb, true);
+      updateSpectrumPath(pathData.s_fft3, peakHoldPoints, spectrumPeakDb, false);
       repaint();
     }
   }
@@ -304,7 +304,7 @@ private:
       };
       auto p0 = std::tan(std::numbers::pi_v<float> * load(config::ID_BAND_FREQ) / sr);
       auto p1 = 1.0f / std::max(load(config::ID_BAND_QUAL), 0.0001f);
-      auto p2 = zlth::unit::toMagFourthRoot(load(config::ID_BAND_GAIN));
+      auto p2 = zlth::unit::foobar<80.0f>(load(config::ID_BAND_GAIN));
       bool isActive = load(config::ID_BAND_BYPASS) < 0.5f;
       auto mode = static_cast<int>(load(config::ID_BAND_CHANNEL));
       auto type = static_cast<zlth::dsp::Filter::FilterType>((int)load(config::ID_BAND_FILTER));
@@ -319,7 +319,7 @@ private:
     for (int i = 0; i < size; ++i) {
       float x = remap(i, 0, size - 1, bounds.getX(), bounds.getRight());
       auto draw = [&](int j) {
-        auto pos = editorGainToCurveArea(zlth::unit::magSqToDB(std::max(curvePoints[j][i], 1e-10f)));
+        auto pos = editorGainToCurveArea(zlth::unit::qux<10.0f>(std::max(curvePoints[j][i], 1e-10f)));
         if (i == 0) {
           responseCurvePath[j].startNewSubPath(x, pos);
         } else {

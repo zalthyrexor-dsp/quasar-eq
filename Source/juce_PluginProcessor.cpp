@@ -117,7 +117,7 @@ void QuasarEQAudioProcessor::updateBands(uint32_t flags) {
       };
       auto p0 = std::tan(std::numbers::pi_v<float> *std::min(load(config::ID_BAND_FREQ) / sr, 0.4999f));
       auto p1 = 1.0f / std::max(load(config::ID_BAND_QUAL), 0.0001f);
-      auto p2 = zlth::unit::toMagFourthRoot(load(config::ID_BAND_GAIN));
+      auto p2 = zlth::unit::foobar<80.0f>(load(config::ID_BAND_GAIN));
       filters[0][i].set_coefficients(p0, p1, p2);
       filters[1][i].set_coefficients(p0, p1, p2);
       bool isActive = load(config::ID_BAND_BYPASS) < 0.5f;
@@ -133,7 +133,7 @@ void QuasarEQAudioProcessor::updateBands(uint32_t flags) {
 
 void QuasarEQAudioProcessor::update_global() {
   auto loadGlobal = [this](const juce::String& id) {
-    return zlth::unit::toMag(apvts.getRawParameterValue(id)->load()) * 0.5f;
+    return zlth::unit::foobar<20.0f>(apvts.getRawParameterValue(id)->load()) * 0.5f;
   };
   gains[0].set_gain(loadGlobal(config::ID_OUT_GAIN_0));
   gains[1].set_gain(loadGlobal(config::ID_OUT_GAIN_1));

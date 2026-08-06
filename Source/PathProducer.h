@@ -6,21 +6,27 @@
 #include <vector>
 
 struct SpectrumRenderData {
-  std::vector<float> spectrumDb;
-  std::vector<float> spectrumPeakDb;
-  std::array<float, 4> meterLevelsDb {-100.0f, -100.0f};
-  std::array<float, 4> meterLevelsPeakDb {-100.0f, -100.0f};
+  std::vector<float> s_fft2;
+  std::vector<float> s_fft3;
+  std::array<float, 4> s_tmp2 {-100.0f, -100.0f, -100.0f, -100.0f};
+  std::array<float, 4> s_tmp3 {-100.0f, -100.0f, -100.0f, -100.0f};
 };
 
 class PathProducer {
 public:
-  PathProducer(std::array<SampleFifo, 2>& leftScsf) : fifo(leftScsf) {
-    decibelsPeak.fill(-100.0f);
-    decibelsCurrent.fill(0.0f);
+  PathProducer(std::array<SampleFifo, 2>& leftScsf): fifo(leftScsf) {
+    fft0.fill(0.0f);
+    fft1.fill(0.0f);
+    tmp0.fill(0.0f);
+    tmp1.fill(0.0f);
+    fft2.fill(db_init);
+    fft3.fill(db_init);
+    tmp2.fill(db_init);
+    tmp3.fill(db_init);
     for (int i = 0; i < 32; ++i) {
       auto& data = pathFifo.getBufferAt(i);
-      data.spectrumDb.assign(FFT_SIZE_HALF, -100.0f);
-      data.spectrumPeakDb.assign(FFT_SIZE_HALF, -100.0f);
+      data.s_fft2.assign(FFT_SIZE_HALF, db_init);
+      data.s_fft3.assign(FFT_SIZE_HALF, db_init);
     }
   }
   void process(double sampleRate) {
@@ -31,7 +37,6 @@ public:
       }
 
       const int originalIncomingSize = buffer[0].size();
-      const float deltaTime = originalIncomingSize / sampleRate;
       const int useSize = std::min(originalIncomingSize, FFT_SIZE);
       const int sourceOffset = originalIncomingSize - useSize;
       const int copySize = FFT_SIZE - useSize;
@@ -40,47 +45,48 @@ public:
         std::memmove(audioBuffer.data(), audioBuffer.data() + useSize, copySize * sizeof(float));
       }
       std::copy(buffer[0].begin() + sourceOffset, buffer[0].end(), audioBuffer.begin() + copySize);
-      std::copy(audioBuffer.begin(), audioBuffer.end(), fftReal.begin());
-      std::fill(fftReal.begin() + FFT_SIZE, fftReal.end(), 0.0f);
+      std::copy(audioBuffer.begin(), audioBuffer.end(), fft0.begin());
+      std::fill(fft0.begin() + FFT_SIZE, fft0.end(), 0.0f);
 
-      std::span FFTNormalizingSpan {fftReal.data(), FFT_SIZE};
-      zlth::simd::mul_inplace(FFTNormalizingSpan, FFT_SIZE_HALF_INVERSE);
-      windowing.multiplyWithWindowingTable(fftReal.data(), FFT_SIZE);
-      fftJuce.performFrequencyOnlyForwardTransform(fftReal.data(), true);
+      std::span FFTNormalizingSpan {fft0.data(), FFT_SIZE};
+      zlth::simd::mul_inplace(FFTNormalizingSpan, 1.0f / static_cast<float>(FFT_SIZE_HALF));
+      windowing.multiplyWithWindowingTable(fft0.data(), FFT_SIZE);
+      fftJuce.performFrequencyOnlyForwardTransform(fft0.data(), true);
 
-      const float smoothing0 = 1.0f - std::exp(-deltaTime * 30.0f);
-      const float smoothing1 = 1.0f - std::exp(-deltaTime * 10.0f);
-      const float smoothing2 = deltaTime * 15.0f;
-      const float smoothing3 = deltaTime * 6.0f;
+      const float deltaTime = originalIncomingSize / sampleRate;
+      const float smooth_fft1 = 1.0f - std::exp(-deltaTime * 30.0f);
+      const float smooth_tmp1 = 1.0f - std::exp(-deltaTime * 10.0f);
+      const float smooth_fft3 = deltaTime * 15.0f;
+      const float smooth_tmp3 = deltaTime * 6.0f;
 
-      zlth::simd::lerp_inplace(smoothedMagnitudes, fftReal, smoothing0);
-      zlth::simd::max_inplace(smoothedMagnitudes, fftReal);
+      zlth::simd::lerp_inplace(fft1, fft0, smooth_fft1);
+      zlth::simd::max_inplace(fft1, fft0);
 
       for (size_t i = 0; i < FFT_SIZE_HALF; ++i) {
-        decibelsCurrent[i] = zlth::unit::magToDB(std::max(smoothedMagnitudes[i], 1e-20f));
+        fft2[i] = zlth::unit::qux<20.0f>(std::max(fft1[i], 1e-20f));
       }
 
-      zlth::simd::sub_inplace(decibelsPeak, smoothing2);
-      zlth::simd::max_inplace(decibelsPeak, decibelsCurrent);
+      zlth::simd::sub_inplace(fft3, smooth_fft3);
+      zlth::simd::max_inplace(fft3, fft2);
 
-      z_temp0[0] = zlth::simd::get_abs_max(buffer[0]);
-      z_temp0[1] = zlth::simd::get_abs_max(buffer[1]);
+      tmp0[0] = zlth::simd::get_abs_max(buffer[0]);
+      tmp0[1] = zlth::simd::get_abs_max(buffer[1]);
       zlth::simd::hadamard_butterfly(buffer[0], buffer[1]);
-      z_temp0[2] = zlth::simd::get_abs_max(buffer[0]);
-      z_temp0[3] = zlth::simd::get_abs_max(buffer[1]);
+      tmp0[2] = zlth::simd::get_abs_max(buffer[0]);
+      tmp0[3] = zlth::simd::get_abs_max(buffer[1]);
 
       for (int i = 0; i < 4; ++i) {
-        smoothedPeakLinear[i] = std::max(z_temp0[i], smoothedPeakLinear[i] + smoothing1 * (z_temp0[i] - smoothedPeakLinear[i]));
-        z_temp1[i] = zlth::unit::magToDB(std::max(smoothedPeakLinear[i], 1e-20f));
-        meterLevelsPeakDb[i] = std::max(meterLevelsPeakDb[i] - smoothing3, z_temp1[i]);
+        tmp1[i] = std::max(tmp0[i], tmp1[i] + smooth_tmp1 * (tmp0[i] - tmp1[i]));
+        tmp2[i] = zlth::unit::qux<20.0f>(std::max(tmp1[i], 1e-20f));
+        tmp3[i] = std::max(tmp2[i], tmp3[i] - smooth_tmp3);
       }
     }
     if (auto* renderData = pathFifo.getWriteBuffer()) {
-      std::copy(decibelsCurrent.begin(), decibelsCurrent.end(), renderData->spectrumDb.begin());
-      std::copy(decibelsPeak.begin(), decibelsPeak.end(), renderData->spectrumPeakDb.begin());
+      std::copy(fft2.begin(), fft2.end(), renderData->s_fft2.begin());
+      std::copy(fft3.begin(), fft3.end(), renderData->s_fft3.begin());
       for (int i = 0; i < 4; ++i) {
-        renderData->meterLevelsDb[i] = z_temp1[i];
-        renderData->meterLevelsPeakDb[i] = meterLevelsPeakDb[i];
+        renderData->s_tmp2[i] = tmp2[i];
+        renderData->s_tmp3[i] = tmp3[i];
       }
       pathFifo.finishedWrite();
     }
@@ -93,30 +99,30 @@ public:
     if (renderData == nullptr) {
       return false;
     }
-    path.spectrumDb = renderData->spectrumDb;
-    path.spectrumPeakDb = renderData->spectrumPeakDb;
+    path.s_fft2 = renderData->s_fft2;
+    path.s_fft3 = renderData->s_fft3;
     for (int i = 0; i < 4; ++i) {
-      path.meterLevelsDb[i] = renderData->meterLevelsDb[i];
-      path.meterLevelsPeakDb[i] = renderData->meterLevelsPeakDb[i];
+      path.s_tmp2[i] = renderData->s_tmp2[i];
+      path.s_tmp3[i] = renderData->s_tmp3[i];
     }
     pathFifo.finishedRead();
     return true;
   }
 
 private:
+  static constexpr float db_init {-100.0f};
   static constexpr int FFT_ORDER {12};
   static constexpr int FFT_SIZE {1 << FFT_ORDER};
   static constexpr int FFT_SIZE_HALF {FFT_SIZE / 2};
-  static constexpr float FFT_SIZE_HALF_INVERSE {1.0f / static_cast<float>(FFT_SIZE_HALF)};
   std::array<float, FFT_SIZE> audioBuffer {};
-  std::array<float, FFT_SIZE * 2> fftReal {};
-  std::array<float, FFT_SIZE_HALF> decibelsPeak {};
-  std::array<float, FFT_SIZE_HALF> decibelsCurrent {};
-  std::array<float, FFT_SIZE_HALF> smoothedMagnitudes {};
-  std::array<float, 4> smoothedPeakLinear {0.0f, 0.0f, 0.0f, 0.0f};
-  std::array<float, 4> meterLevelsPeakDb {-100.0f, -100.0f, -100.0f, -100.0f};
-  std::array<float, 4> z_temp0 {0.0f, 0.0f, 0.0f, 0.0f};
-  std::array<float, 4> z_temp1 {0.0f, 0.0f, 0.0f, 0.0f};
+  std::array<float, FFT_SIZE * 2> fft0 {};
+  std::array<float, FFT_SIZE_HALF> fft1 {};
+  std::array<float, FFT_SIZE_HALF> fft2 {};
+  std::array<float, FFT_SIZE_HALF> fft3 {};
+  std::array<float, 4> tmp0 {};
+  std::array<float, 4> tmp1 {};
+  std::array<float, 4> tmp2 {};
+  std::array<float, 4> tmp3 {};
   std::array<SampleFifo, 2>& fifo;
   Fifo<SpectrumRenderData> pathFifo;
   juce::dsp::WindowingFunction<float> windowing {FFT_SIZE, juce::dsp::WindowingFunction<float>::blackmanHarris, true};
