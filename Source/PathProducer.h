@@ -29,6 +29,7 @@ public:
       data.s_fft3.assign(FFT_SIZE_HALF, db_init);
     }
   }
+
   void process(double sampleRate) {
     std::array<std::vector<float>, 2> buffer {};
     while (fifo[0].getNumAvailable() > 0 && fifo[1].getNumAvailable() > 0) {
@@ -36,16 +37,16 @@ public:
         continue;
       }
 
-      const int originalIncomingSize = buffer[0].size();
-      const int useSize = std::min(originalIncomingSize, FFT_SIZE);
-      const int sourceOffset = originalIncomingSize - useSize;
-      const int copySize = FFT_SIZE - useSize;
-
-      if (copySize > 0) {
-        std::memmove(audioBuffer.data(), audioBuffer.data() + useSize, copySize * sizeof(float));
+      const int bufferSize = buffer[0].size();
+      if (FFT_SIZE > bufferSize) {
+        const int shiftSize = FFT_SIZE - bufferSize;
+        std::memmove(fft_.data(), fft_.data() + bufferSize, shiftSize * sizeof(float));
+        std::copy(buffer[0].begin(), buffer[0].end(), fft_.begin() + shiftSize);
       }
-      std::copy(buffer[0].begin() + sourceOffset, buffer[0].end(), audioBuffer.begin() + copySize);
-      std::copy(audioBuffer.begin(), audioBuffer.end(), fft0.begin());
+      else {
+        std::copy(buffer[0].begin() + (bufferSize - FFT_SIZE), buffer[0].end(), fft_.begin());
+      }
+      std::copy(fft_.begin(), fft_.end(), fft0.begin());
       std::fill(fft0.begin() + FFT_SIZE, fft0.end(), 0.0f);
 
       std::span FFTNormalizingSpan {fft0.data(), FFT_SIZE};
@@ -53,7 +54,7 @@ public:
       windowing.multiplyWithWindowingTable(fft0.data(), FFT_SIZE);
       fftJuce.performFrequencyOnlyForwardTransform(fft0.data(), true);
 
-      const float deltaTime = originalIncomingSize / sampleRate;
+      const float deltaTime = bufferSize / sampleRate;
       const float smooth_fft1 = 1.0f - std::exp(-deltaTime * 30.0f);
       const float smooth_tmp1 = 1.0f - std::exp(-deltaTime * 10.0f);
       const float smooth_fft3 = deltaTime * 15.0f;
@@ -81,6 +82,7 @@ public:
         tmp3[i] = std::max(tmp2[i], tmp3[i] - smooth_tmp3);
       }
     }
+
     if (auto* renderData = pathFifo.getWriteBuffer()) {
       std::copy(fft2.begin(), fft2.end(), renderData->s_fft2.begin());
       std::copy(fft3.begin(), fft3.end(), renderData->s_fft3.begin());
@@ -91,6 +93,7 @@ public:
       pathFifo.finishedWrite();
     }
   }
+
   int getNumPathsAvailable() const {
     return pathFifo.getNumAvailableForReading();
   }
@@ -114,15 +117,10 @@ private:
   static constexpr int FFT_ORDER {12};
   static constexpr int FFT_SIZE {1 << FFT_ORDER};
   static constexpr int FFT_SIZE_HALF {FFT_SIZE / 2};
-  std::array<float, FFT_SIZE> audioBuffer {};
+  std::array<float, FFT_SIZE> fft_ {};
   std::array<float, FFT_SIZE * 2> fft0 {};
-  std::array<float, FFT_SIZE_HALF> fft1 {};
-  std::array<float, FFT_SIZE_HALF> fft2 {};
-  std::array<float, FFT_SIZE_HALF> fft3 {};
-  std::array<float, 4> tmp0 {};
-  std::array<float, 4> tmp1 {};
-  std::array<float, 4> tmp2 {};
-  std::array<float, 4> tmp3 {};
+  std::array<float, FFT_SIZE_HALF> fft1 {}, fft2 {}, fft3 {};
+  std::array<float, 4> tmp0 {}, tmp1 {}, tmp2 {}, tmp3 {};
   std::array<SampleFifo, 2>& fifo;
   Fifo<SpectrumRenderData> pathFifo;
   juce::dsp::WindowingFunction<float> windowing {FFT_SIZE, juce::dsp::WindowingFunction<float>::blackmanHarris, true};
