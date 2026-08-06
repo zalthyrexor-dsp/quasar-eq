@@ -20,7 +20,7 @@ public:
     tmp1.fill(0.0f);
     fft3.fill(db_init);
     tmp3.fill(db_init);
-    for (int i = 0; i < 32; ++i) {
+    for (int i = 0; i < capacity; ++i) {
       auto& data = pathFifo.getBufferAt(i);
       data.s_fft2.assign(FFT_SIZE_HALF, db_init);
       data.s_fft3.assign(FFT_SIZE_HALF, db_init);
@@ -105,12 +105,13 @@ private:
   static constexpr int FFT_ORDER {12};
   static constexpr int FFT_SIZE {1 << FFT_ORDER};
   static constexpr int FFT_SIZE_HALF {FFT_SIZE / 2};
+  static constexpr int capacity {32};
   std::array<float, FFT_SIZE> fft_ {};
   std::array<float, FFT_SIZE * 2> fft0 {};
   std::array<float, FFT_SIZE_HALF> fft1 {}, fft2 {}, fft3 {};
   std::array<float, 4> tmp0 {}, tmp1 {}, tmp2 {}, tmp3 {};
   std::array<SampleFifo, 2>& fifo;
-  Fifo<SpectrumRenderData> pathFifo;
+  Fifo<SpectrumRenderData, capacity> pathFifo;
   juce::dsp::WindowingFunction<float> windowing {FFT_SIZE, juce::dsp::WindowingFunction<float>::blackmanHarris, true};
   juce::dsp::FFT fftJuce {FFT_ORDER};
 };

@@ -8,7 +8,6 @@ public:
   CustomLNF() {
     setColour(juce::Label::textColourId, config::z_text);
     setColour(juce::Label::backgroundWhenEditingColourId, config::z_pluginBackground);
-
     setColour(juce::PopupMenu::backgroundColourId, config::z_textBackground);
     setColour(juce::PopupMenu::textColourId, config::z_text);
     setColour(juce::PopupMenu::highlightedBackgroundColourId, config::z_theme);
@@ -31,13 +30,10 @@ public:
     auto centerAngle = rotaryStartAngle + (rotaryEndAngle - rotaryStartAngle) * 0.5f;
     g.setColour(config::z_slider);
     auto knobRadius = radius - lineThickness - 2.0f;
-
     auto knobBounds = sliderBounds.reduced(lineThickness + 2.0f);
-
     g.fillEllipse(knobBounds);
     g.setColour(config::z_sliderRim);
     g.drawEllipse(knobBounds, 2.0f);
-
     backgroundArc.addCentredArc(centerX, centerY, radius, radius, 0.0f, rotaryStartAngle, rotaryEndAngle, true);
     g.setColour(config::z_groove);
     g.strokePath(backgroundArc, juce::PathStrokeType(lineThickness, juce::PathStrokeType::curved, juce::PathStrokeType::butt));
