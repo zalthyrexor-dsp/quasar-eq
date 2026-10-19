@@ -116,7 +116,6 @@ public:
     if (availableIdx == NoBandSelected)
       return;
     draggingBand = availableIdx;
-
     auto [mouseX, mouseY] = e.position;
     auto bounds = getCurveArea().toFloat();
     float freqHz = curveAreaToEditorFreq(mouseX);
